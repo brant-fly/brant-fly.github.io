@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 type Section = "模型发布/更新" | "产品发布/更新" | "行业动态" | "论文研究" | "技巧与观点";
-type Story = { section: Section; title: string; source: string; summary: string; url: string; time: string };
+type Story = { section: Section; title: string; source: string; summary: string; url: string; time: string; image?: string };
 
 const sections: Array<{ name: Section; tag: string; note: string }> = [
   { name: "模型发布/更新", tag: "MODEL", note: "能力、价格与可用性" },
@@ -12,6 +12,24 @@ const sections: Array<{ name: Section; tag: string; note: string }> = [
   { name: "论文研究", tag: "PAPER", note: "值得跟进的研究" },
   { name: "技巧与观点", tag: "PRACTICE", note: "方法、判断与工作流" },
 ];
+
+const visualBank: Record<Section, string[]> = {
+  "模型发布/更新": ["https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1535378917042-10a22c95931a?auto=format&fit=crop&w=900&q=80"],
+  "产品发布/更新": ["https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80"],
+  "行业动态": ["https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80"],
+  "论文研究": ["https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=900&q=80"],
+  "技巧与观点": ["https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=900&q=80"],
+};
+const visualFor = (section: Section, seed = 0) => visualBank[section][seed % visualBank[section].length];
+
+async function toChineseTitle(title: string) {
+  if (!/[a-z]{3,}/i.test(title) || /[\u4e00-\u9fff]/.test(title)) return title;
+  try {
+    const response = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(title)}&langpair=en|zh-CN`);
+    const translated = (await response.json()).responseData?.translatedText?.trim();
+    return translated && !/MYMEMORY WARNING/i.test(translated) ? translated : title;
+  } catch { return title; }
+}
 
 const fallback: Story[] = [
   { section: "模型发布/更新", title: "GPT‑5.4 mini 在 ChatGPT 中上线", source: "OpenAI", summary: "轻量推理模型向免费与 Go 用户逐步开放，并承担高峰期回退。", url: "https://help.openai.com/en/articles/9624314-model-release-notes", time: "8月4日 上午" },
@@ -85,9 +103,10 @@ export default function Home() {
           }));
         const [qbit, geekpark] = await Promise.all([qbitResponse.json(), geekparkResponse.json()]);
         const chineseStories = [...toChineseStories(qbit, "量子位"), ...toChineseStories(geekpark, "极客公园")];
-        const fresh = [...hnStories, ...chineseStories, ...paperStories];
+        const fresh = [...hnStories, ...chineseStories, ...paperStories].map((story, index) => ({ ...story, image: visualFor(story.section, index) }));
         if (active && fresh.length >= 4) {
-          setStories([...fresh, ...fallback].slice(0, 16));
+          const translated = await Promise.all(fresh.map(async (story) => ({ ...story, title: await toChineseTitle(story.title) })));
+          setStories([...translated, ...fallback].slice(0, 16));
           setIssueLabel(hnStories.some((story) => story.time.startsWith("今天")) ? "今日实时更新" : "最新可用一期");
         }
       } catch {
@@ -132,6 +151,7 @@ export default function Home() {
                 const serial = stories.indexOf(story) + 1;
                 return <article className="card" key={`${story.title}-${serial}`}>
                   <div className="card-top"><b>{String(serial).padStart(2, "0")}</b><span className="source">{story.source}</span></div>
+                  <img className="thumbnail" src={story.image || visualFor(story.section, serial)} alt="" loading="lazy" />
                   <h3>{story.title}</h3><p className="summary">{story.summary.slice(0, 60)}</p>
                   <footer><time>{story.time}</time><a href={story.url} target="_blank" rel="noopener noreferrer" aria-label={`阅读原文：${story.title}`}>原文 <i>↗</i></a></footer>
                 </article>;
