@@ -8,14 +8,6 @@ type AihotItem = { title: string; summary?: string | null; source?: { name?: str
 type AihotReport = { date?: string; generatedAt?: string; links?: { aihot?: string }; attribution?: { name?: string; url?: string }; sections?: Array<{ label?: string; items?: AihotItem[] }> };
 
 const sourceEndpoint = "https://aihot.virxact.com/api/v1/dailies/latest";
-const defaultThumbnail = "/og.png";
-const thumbnails: Record<Section, string[]> = {
-  "模型发布/更新": ["https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1535378917042-10a22c95931a?auto=format&fit=crop&w=900&q=80"],
-  "产品发布/更新": ["https://images.unsplash.com/photo-1551650975-87deedd944c3?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1551288049-bebda4e38f71?auto=format&fit=crop&w=900&q=80"],
-  "行业动态": ["https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80"],
-  "论文研究": ["https://images.unsplash.com/photo-1532094349884-543bc11b234d?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1532187863486-abf9dbad1b69?auto=format&fit=crop&w=900&q=80"],
-  "技巧与观点": ["https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&w=900&q=80", "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?auto=format&fit=crop&w=900&q=80"],
-};
 const sections: Array<{ name: Section; tag: string; note: string }> = [
   { name: "模型发布/更新", tag: "MODEL", note: "能力、价格与可用性" },
   { name: "产品发布/更新", tag: "PRODUCT", note: "工具、功能与体验" },
@@ -101,11 +93,10 @@ export default function Home() {
           <section className="section" id={`section-${groupIndex + 1}`} key={group.name} aria-labelledby={`heading-${groupIndex + 1}`}>
             <header className="section-head"><div><p>{group.tag} / {String(groupIndex + 1).padStart(2, "0")}</p><h2 id={`heading-${groupIndex + 1}`}>{group.name}</h2></div><span>{group.note}</span></header>
             <div className="card-grid">
-              {group.stories.map((story, index) => {
+              {group.stories.map((story) => {
                 const serial = stories.indexOf(story) + 1;
                 return <article className="card" key={`${story.title}-${serial}`}>
                   <div className="card-top"><b>{String(serial).padStart(2, "0")}</b><span className="source">{story.source}</span></div>
-                  <img className="thumbnail" src={thumbnails[story.section][(serial + index) % thumbnails[story.section].length]} alt="AI 资讯主题配图" loading="lazy" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = defaultThumbnail; }} />
                   <h3>{story.title}</h3><p className="summary">{story.summary.slice(0, 60)}</p>
                   <footer><time>{report?.generatedAt ? humanTime(report.generatedAt) : "最新一期"}</time><a href={story.url} target="_blank" rel="noopener noreferrer" aria-label={`阅读原文：${story.title}`}>原文 <i>↗</i></a></footer>
                 </article>;
