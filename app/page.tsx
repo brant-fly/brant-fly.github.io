@@ -151,7 +151,7 @@ export default function Home() {
                 const serial = stories.indexOf(story) + 1;
                 return <article className="card" key={`${story.title}-${serial}`}>
                   <div className="card-top"><b>{String(serial).padStart(2, "0")}</b><span className="source">{story.source}</span></div>
-                  <img className="thumbnail" src={story.image || visualFor(story.section, serial)} alt="" loading="lazy" />
+                  <img className="thumbnail" src={story.image || visualFor(story.section, serial)} alt="" loading="lazy" onError={(event) => { event.currentTarget.onerror = null; event.currentTarget.src = "/og.png"; }} />
                   <h3>{story.title}</h3><p className="summary">{story.summary.slice(0, 60)}</p>
                   <footer><time>{story.time}</time><a href={story.url} target="_blank" rel="noopener noreferrer" aria-label={`阅读原文：${story.title}`}>原文 <i>↗</i></a></footer>
                 </article>;
